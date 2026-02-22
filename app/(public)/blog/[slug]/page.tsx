@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { buildPostMetadata } from "@/lib/utils/seo";
+import { ShareWechat } from "@/components/blog/ShareWechat";
 
 export const dynamicParams = true;
 
@@ -141,16 +142,24 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Cover image */}
         {post.coverImageUrl && (
-          <div className="mt-8 relative aspect-video overflow-hidden rounded-lg">
-            <Image
-              src={post.coverImageUrl}
-              alt={`Cover image for ${post.title}`}
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width: 768px) 100vw, 768px"
-            />
-          </div>
+          <>
+            <div className="mt-8 relative aspect-video overflow-hidden rounded-lg">
+              <Image
+                src={post.coverImageUrl}
+                alt={`Cover image for ${post.title}`}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 768px) 100vw, 768px"
+              />
+            </div>
+            <div className="mt-3 flex justify-end">
+              <ShareWechat
+                url={`${SITE_URL}/blog/${post.slug}`}
+                title={post.title}
+              />
+            </div>
+          </>
         )}
 
         <Separator className="my-8" />

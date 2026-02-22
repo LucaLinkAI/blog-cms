@@ -10,7 +10,9 @@
     "db:migrate": "./scripts/db-migrate.sh",
     "db:seed": "./scripts/db-seed.sh",
     "db:reset": "./scripts/db-reset.sh",
-    "db:setup": "./scripts/db-migrate.sh && ./scripts/db-seed.sh"
+    "db:setup": "./scripts/db-migrate.sh && ./scripts/db-seed.sh",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:prod": "./scripts/deploy.sh --prod"
   },
   "dependencies": {
     "@blocknote/core": "^0.46.2",
@@ -26,6 +28,7 @@
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "next-themes": "^0.4.6",
+    "qrcode.react": "^4.2.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
