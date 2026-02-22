@@ -41,7 +41,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
 
   const result = await provider.listPosts(
     { status: "published", authorId: author.id },
-    (page - 1) * PAGE_SIZE,
+    page - 1,
     PAGE_SIZE
   );
 

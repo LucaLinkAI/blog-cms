@@ -38,7 +38,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const result = await provider.listPosts(
     { status: "published", categorySlug: slug },
-    (page - 1) * PAGE_SIZE,
+    page - 1,
     PAGE_SIZE
   );
 

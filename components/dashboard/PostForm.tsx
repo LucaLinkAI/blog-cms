@@ -14,21 +14,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MediaPickerDialog } from "@/components/dashboard/MediaPickerDialog";
 import { slugify } from "@/lib/utils/slug";
 import { calculateReadingTime } from "@/lib/utils/reading-time";
 import type { Block, Category, Tag, Post, PostStatus } from "@/lib/data/types";
 
-// Load BlockEditor only on the client to keep public-page bundles clean
 const BlockEditor = dynamic(() => import("@/components/editor/BlockEditor"), {
   ssr: false,
   loading: () => (
-    <div className="space-y-2">
-      <Skeleton className="h-8 w-full" />
-      <Skeleton className="h-8 w-3/4" />
-      <Skeleton className="h-8 w-full" />
-      <Skeleton className="h-8 w-1/2" />
+    <div className="space-y-2 pt-4">
+      <Skeleton className="h-5 w-full" />
+      <Skeleton className="h-5 w-3/4" />
+      <Skeleton className="h-5 w-full" />
+      <Skeleton className="h-5 w-1/2" />
     </div>
   ),
 });
@@ -52,6 +52,7 @@ interface PostFormProps {
   tags: Tag[];
   onSave: (data: PostFormData) => Promise<void>;
   saving?: boolean;
+  pageTitle?: string;
 }
 
 export function PostForm({
@@ -60,6 +61,7 @@ export function PostForm({
   tags,
   onSave,
   saving = false,
+  pageTitle,
 }: PostFormProps) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
@@ -68,21 +70,15 @@ export function PostForm({
   const [content, setContent] = useState<Block[]>(initial?.content ?? []);
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
   const [tagIds, setTagIds] = useState<string[]>(initial?.tagIds ?? []);
-  const [coverImageUrl, setCoverImageUrl] = useState(
-    initial?.coverImageUrl ?? ""
-  );
+  const [coverImageUrl, setCoverImageUrl] = useState(initial?.coverImageUrl ?? "");
   const [metaTitle, setMetaTitle] = useState(initial?.metaTitle ?? "");
-  const [metaDescription, setMetaDescription] = useState(
-    initial?.metaDescription ?? ""
-  );
-  const [status, setStatus] = useState<PostStatus>(
-    initial?.status ?? "draft"
-  );
-  const [readingTime, setReadingTime] = useState<number>(
-    initial?.readingTime ?? 1
-  );
+  const [metaDescription, setMetaDescription] = useState(initial?.metaDescription ?? "");
+  const [status, setStatus] = useState<PostStatus>(initial?.status ?? "draft");
+  const [readingTime, setReadingTime] = useState<number>(initial?.readingTime ?? 1);
   const [error, setError] = useState<string | null>(null);
   const [coverPickerOpen, setCoverPickerOpen] = useState(false);
+
+  const heading = pageTitle ?? (initial?.id ? "Edit Post" : "New Post");
 
   function handleTitleBlur() {
     if (!slugLocked && title) {
@@ -101,9 +97,9 @@ export function PostForm({
     );
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function triggerSave(overrideStatus?: PostStatus) {
     setError(null);
+    const effectiveStatus = overrideStatus ?? status;
     try {
       await onSave({
         title,
@@ -115,251 +111,312 @@ export function PostForm({
         coverImageUrl,
         metaTitle,
         metaDescription,
-        status,
+        status: effectiveStatus,
       });
+      if (overrideStatus) setStatus(overrideStatus);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save post.");
     }
   }
 
+  const createdAt = initial?.createdAt
+    ? new Date(initial.createdAt).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "Just now";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Sticky header */}
+      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ← Back
+          </button>
+          <span className="font-bold text-base hidden sm:block">{heading}</span>
+
+          <div className="ml-auto flex items-center gap-2">
+            {error && (
+              <span className="text-xs text-destructive hidden md:block max-w-xs truncate">
+                {error}
+              </span>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={() => triggerSave("draft")}
+            >
+              Save Draft
+            </Button>
+            {initial?.slug && (
+              <Button type="button" variant="outline" size="sm" asChild>
+                <a href={`/blog/${initial.slug}`} target="_blank" rel="noopener noreferrer">
+                  Preview
+                </a>
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              disabled={saving}
+              onClick={() => triggerSave("published")}
+            >
+              {saving ? "Saving…" : "Publish"}
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Error banner (mobile) */}
       {error && (
         <div
           role="alert"
-          className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive"
+          className="md:hidden mx-4 mt-3 rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive"
         >
           {error}
         </div>
       )}
 
-      {/* Core fields */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Post Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={handleTitleBlur}
-              placeholder="My amazing post"
-              maxLength={300}
-            />
-          </div>
+      {/* Two-column body */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px]">
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="slug">Slug *</Label>
-              <button
-                type="button"
-                className="text-xs text-muted-foreground underline"
-                onClick={() => setSlugLocked((v) => !v)}
-              >
-                {slugLocked ? "Edit" : "Lock"}
-              </button>
-            </div>
-            <Input
-              id="slug"
-              required
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              disabled={slugLocked}
-              placeholder="my-amazing-post"
-              pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
-              title="Lowercase alphanumeric with hyphens"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="excerpt">Excerpt</Label>
-            <Textarea
-              id="excerpt"
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              placeholder="A short summary of the post…"
-              maxLength={300}
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">
-              {excerpt.length}/300
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select
-                value={categoryId || "__none__"}
-                onValueChange={(v) => setCategoryId(v === "__none__" ? "" : v)}
-              >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={status}
-                onValueChange={(v) => setStatus(v as PostStatus)}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="coverImageUrl">Cover Image URL</Label>
-            <div className="flex gap-2">
-              <Input
-                id="coverImageUrl"
-                type="url"
-                value={coverImageUrl}
-                onChange={(e) => setCoverImageUrl(e.target.value)}
-                placeholder="https://example.com/cover.jpg"
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setCoverPickerOpen(true)}
-              >
-                Browse Library
-              </Button>
-            </div>
-          </div>
-
-          <MediaPickerDialog
-            open={coverPickerOpen}
-            onOpenChange={setCoverPickerOpen}
-            onSelect={(url) => setCoverImageUrl(url)}
+        {/* Left: writing area */}
+        <div className="px-6 sm:px-10 py-8 lg:border-r space-y-0 min-w-0">
+          {/* Title */}
+          <input
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={handleTitleBlur}
+            placeholder="Post title…"
+            maxLength={300}
+            className="w-full text-2xl sm:text-3xl font-bold bg-transparent border-none outline-none placeholder:text-muted-foreground/40 mb-4"
           />
-        </CardContent>
-      </Card>
 
-      {/* Tags */}
-      {tags.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tags</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <label
-                  key={tag.id}
-                  className={`flex items-center gap-1.5 cursor-pointer rounded-full px-3 py-1 text-sm border transition-colors ${
-                    tagIds.includes(tag.id)
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-border text-muted-foreground hover:border-primary/50"
-                  }`}
+          {/* Excerpt */}
+          <textarea
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            placeholder="Write a brief excerpt or summary…"
+            maxLength={300}
+            rows={2}
+            className="w-full resize-none bg-transparent border-none outline-none text-muted-foreground placeholder:text-muted-foreground/40 text-base mb-6"
+          />
+
+          <Separator className="mb-6" />
+
+          {/* Block editor */}
+          <div className="min-h-[400px]">
+            <BlockEditor
+              initialContent={initial?.content ?? undefined}
+              onChange={handleContentChange}
+            />
+          </div>
+
+          <p className="mt-4 text-xs text-muted-foreground">~{readingTime} min read</p>
+        </div>
+
+        {/* Right: sidebar */}
+        <div className="px-4 py-6 space-y-4 bg-muted/20">
+
+          {/* Post Settings */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Post Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Slug */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="slug" className="text-sm">Slug</Label>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground underline"
+                    onClick={() => setSlugLocked((v) => !v)}
+                  >
+                    {slugLocked ? "Edit" : "Lock"}
+                  </button>
+                </div>
+                <Input
+                  id="slug"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  disabled={slugLocked}
+                  placeholder="my-amazing-post"
+                  pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  title="Lowercase alphanumeric with hyphens"
+                />
+              </div>
+
+              {/* Category */}
+              <div className="space-y-1.5">
+                <Label htmlFor="category" className="text-sm">Category</Label>
+                <Select
+                  value={categoryId || "__none__"}
+                  onValueChange={(v) => setCategoryId(v === "__none__" ? "" : v)}
                 >
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={tagIds.includes(tag.id)}
-                    onChange={() => toggleTag(tag.id)}
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Cover Image */}
+              <div className="space-y-1.5">
+                <Label htmlFor="coverImageUrl" className="text-sm">Cover Image URL</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="coverImageUrl"
+                    type="url"
+                    value={coverImageUrl}
+                    onChange={(e) => setCoverImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="flex-1 min-w-0"
                   />
-                  {tag.name}
-                </label>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => setCoverPickerOpen(true)}
+                  >
+                    Browse
+                  </Button>
+                </div>
+              </div>
 
-      {/* Content editor */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Content</CardTitle>
-            <span className="text-sm text-muted-foreground">
-              ~{readingTime} min read
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="min-h-[300px]">
-          <BlockEditor
-            initialContent={initial?.content ?? undefined}
-            onChange={handleContentChange}
-          />
-        </CardContent>
-      </Card>
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Tags</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <label
+                        key={tag.id}
+                        className={`flex items-center gap-1.5 cursor-pointer rounded-full px-3 py-1 text-xs border transition-colors ${
+                          tagIds.includes(tag.id)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border text-muted-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={tagIds.includes(tag.id)}
+                          onChange={() => toggleTag(tag.id)}
+                        />
+                        {tag.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-      {/* SEO fields */}
-      <Card>
-        <CardHeader>
-          <CardTitle>SEO</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="metaTitle">
-              Meta Title{" "}
-              <span className="text-muted-foreground font-normal">
-                ({metaTitle.length}/70)
-              </span>
-            </Label>
-            <Input
-              id="metaTitle"
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              maxLength={70}
-              placeholder="Leave blank to use post title"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="metaDescription">
-              Meta Description{" "}
-              <span className="text-muted-foreground font-normal">
-                ({metaDescription.length}/160)
-              </span>
-            </Label>
-            <Textarea
-              id="metaDescription"
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              maxLength={160}
-              rows={3}
-              placeholder="Leave blank to use excerpt"
-            />
-          </div>
-        </CardContent>
-      </Card>
+              <MediaPickerDialog
+                open={coverPickerOpen}
+                onOpenChange={setCoverPickerOpen}
+                onSelect={(url) => setCoverImageUrl(url)}
+              />
+            </CardContent>
+          </Card>
 
-      <div className="flex gap-3">
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving…" : "Save Post"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => window.history.back()}
-        >
-          Cancel
-        </Button>
+          {/* Publishing */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Publishing</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="status" className="text-sm">Status</Label>
+                <Select
+                  value={status}
+                  onValueChange={(v) => setStatus(v as PostStatus)}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between text-sm py-1">
+                <span className="text-muted-foreground">Visibility</span>
+                <span className="font-medium">Public</span>
+              </div>
+              <div className="flex items-center justify-between text-sm py-1">
+                <span className="text-muted-foreground">Created</span>
+                <span className="font-medium">{createdAt}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SEO Preview */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">SEO Preview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-md border bg-background p-3 text-sm space-y-1">
+                <p className="font-medium text-foreground truncate">
+                  {metaTitle || title || "Post title will appear here"}
+                </p>
+                <p className="text-muted-foreground text-xs line-clamp-2">
+                  {metaDescription || excerpt || "Post excerpt will appear here as the meta description…"}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="metaTitle" className="text-sm">
+                  Meta Title{" "}
+                  <span className="text-muted-foreground font-normal">({metaTitle.length}/70)</span>
+                </Label>
+                <Input
+                  id="metaTitle"
+                  value={metaTitle}
+                  onChange={(e) => setMetaTitle(e.target.value)}
+                  maxLength={70}
+                  placeholder="Leave blank to use post title"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="metaDescription" className="text-sm">
+                  Meta Description{" "}
+                  <span className="text-muted-foreground font-normal">({metaDescription.length}/160)</span>
+                </Label>
+                <Textarea
+                  id="metaDescription"
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  maxLength={160}
+                  rows={3}
+                  placeholder="Leave blank to use excerpt"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+        </div>
       </div>
-    </form>
+    </div>
   );
 }

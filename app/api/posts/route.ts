@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") ?? "10", 10) || 10));
 
   const provider = getDataProvider();
-  const result = await provider.listPosts(parsed.data, (page - 1) * pageSize, pageSize);
+  const result = await provider.listPosts(parsed.data, page - 1, pageSize);
 
   return NextResponse.json(result);
 }

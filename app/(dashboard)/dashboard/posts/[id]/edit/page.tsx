@@ -94,7 +94,7 @@ export default function EditPostPage() {
 
   if (loading || !post) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-4">
+      <div className="p-8 space-y-4 max-w-3xl">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -102,34 +102,13 @@ export default function EditPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Edit Post</h1>
-            <p className="text-sm text-muted-foreground">{post.title}</p>
-          </div>
-          {post.status === "published" && (
-            <a
-              href={`/blog/${post.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary underline"
-            >
-              View live ↗
-            </a>
-          )}
-        </div>
-      </header>
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
-        <PostForm
-          initial={post}
-          categories={categories}
-          tags={tags}
-          onSave={handleSave}
-          saving={saving}
-        />
-      </main>
-    </div>
+    <PostForm
+      initial={post}
+      categories={categories}
+      tags={tags}
+      onSave={handleSave}
+      saving={saving}
+      pageTitle="Edit Post"
+    />
   );
 }

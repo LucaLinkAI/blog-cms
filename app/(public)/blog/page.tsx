@@ -10,7 +10,7 @@ import { PostFiltersSchema } from "@/lib/validations/post";
 
 export const revalidate = 60;
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Blog CMS";
 
 export const metadata: Metadata = {
@@ -45,7 +45,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const [result, allTags, allCategories, allAuthors] = await Promise.all([
     provider.listPosts(
       { ...filters, status: "published" },
-      (page - 1) * PAGE_SIZE,
+      page - 1,
       PAGE_SIZE
     ),
     provider.listTags(),

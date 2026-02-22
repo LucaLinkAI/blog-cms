@@ -35,7 +35,7 @@ export default async function PostsPage({ searchParams }: PageProps) {
       authorId:
         session.user.role === "author" ? session.user.id : undefined,
     },
-    (page - 1) * pageSize,
+    page - 1,
     pageSize
   );
 

@@ -45,7 +45,7 @@ export default function NewPostPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-4">
+      <div className="p-8 space-y-4 max-w-3xl">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -53,20 +53,12 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold">New Post</h1>
-        </div>
-      </header>
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
-        <PostForm
-          categories={categories}
-          tags={tags}
-          onSave={handleSave}
-          saving={saving}
-        />
-      </main>
-    </div>
+    <PostForm
+      categories={categories}
+      tags={tags}
+      onSave={handleSave}
+      saving={saving}
+      pageTitle="New Post"
+    />
   );
 }

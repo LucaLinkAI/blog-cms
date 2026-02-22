@@ -38,7 +38,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
 
   const result = await provider.listPosts(
     { status: "published", tagSlug: slug },
-    (page - 1) * PAGE_SIZE,
+    page - 1,
     PAGE_SIZE
   );
 
