@@ -108,7 +108,7 @@ function renderBlock(block: Record<string, unknown>, depth = 0): string {
 
     case "codeBlock": {
       const lang = escapeHtml((props.language as string) ?? "");
-      return `<pre class="rounded-lg bg-muted p-4 overflow-x-auto"><code${lang ? ` class="language-${lang}"` : ""}>${inner}</code></pre>`;
+      return `<pre class="not-prose rounded-lg bg-zinc-950 p-4 overflow-x-auto text-zinc-100 text-sm font-mono leading-relaxed"><code${lang ? ` class="language-${lang}"` : ""}>${inner}</code></pre>`;
     }
 
     case "quote":
