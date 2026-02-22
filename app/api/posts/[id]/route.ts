@@ -108,6 +108,30 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   };
 
   const updated = await provider.updatePost(id, updateInput);
+
+  // Trigger ISR revalidation when a status change occurs (publish/unpublish/archive)
+  if (input.status && input.status !== post.status) {
+    const revalidateSecret = process.env.REVALIDATE_SECRET;
+    if (revalidateSecret) {
+      const origin =
+        process.env.NEXT_PUBLIC_SITE_URL ?? request.nextUrl.origin;
+      fetch(`${origin}/api/revalidate`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-revalidate-secret": revalidateSecret,
+        },
+        body: JSON.stringify({
+          type: "post",
+          slug: updated.slug,
+          categorySlug: updated.category?.slug,
+        }),
+      }).catch(() => {
+        // Non-blocking — revalidation failure should not fail the request
+      });
+    }
+  }
+
   return NextResponse.json(updated);
 }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDataProvider } from "@/lib/data";
+import { createStaticClient } from "@/lib/supabase/server";
 import { PostGrid } from "@/components/blog/PostGrid";
 import { PostPagination } from "@/components/blog/PostPagination";
 import { buildTagMetadata } from "@/lib/utils/seo";
@@ -13,9 +14,9 @@ interface TagPageProps {
 }
 
 export async function generateStaticParams() {
-  const provider = getDataProvider();
-  const tags = await provider.listTags();
-  return tags.map((t) => ({ slug: t.slug }));
+  const supabase = createStaticClient();
+  const { data } = await supabase.from("tags").select("slug");
+  return (data ?? []).map((t: { slug: string }) => ({ slug: t.slug }));
 }
 
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {

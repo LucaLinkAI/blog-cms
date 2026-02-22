@@ -12,8 +12,16 @@ export const CreatePostSchema = z.object({
   content: z.array(z.any()).optional(),
   excerpt: z.string().max(300).optional(),
   coverImageUrl: z.string().url().optional().or(z.literal("")),
-  categoryId: z.string().uuid().optional(),
-  tagIds: z.array(z.string().uuid()).optional(),
+  // Preprocess: the form sends "" for "no category"; coerce to undefined before UUID check.
+  categoryId: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().uuid().optional()
+  ),
+  // Preprocess: filter out any empty strings that may arrive from the form.
+  tagIds: z.preprocess(
+    (v) => (Array.isArray(v) ? v.filter((id) => id !== "") : v),
+    z.array(z.string().uuid()).optional()
+  ),
   metaTitle: z.string().max(70).optional(),
   metaDescription: z.string().max(160).optional(),
   status: PostStatusSchema.optional(),

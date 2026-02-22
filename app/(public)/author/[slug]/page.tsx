@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getDataProvider } from "@/lib/data";
+import { createStaticClient } from "@/lib/supabase/server";
 import { PostGrid } from "@/components/blog/PostGrid";
 import { PostPagination } from "@/components/blog/PostPagination";
 import { buildAuthorMetadata } from "@/lib/utils/seo";
@@ -16,9 +17,9 @@ interface AuthorPageProps {
 }
 
 export async function generateStaticParams() {
-  const provider = getDataProvider();
-  const authors = await provider.listAuthors();
-  return authors.map((a) => ({ slug: a.slug }));
+  const supabase = createStaticClient();
+  const { data } = await supabase.from("profiles").select("slug");
+  return (data ?? []).map((a: { slug: string }) => ({ slug: a.slug }));
 }
 
 export async function generateMetadata({ params }: AuthorPageProps): Promise<Metadata> {

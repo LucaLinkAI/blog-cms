@@ -15,7 +15,7 @@ export const MOCK_USERS: MockUser[] = [
     email: "admin@example.com",
     password: "password123",
     profile: {
-      id: "a1b2c3d4-0001-0001-0001-000000000001",
+      id: "a1b2c3d4-0001-4001-8001-000000000001",
       displayName: "Alex Rivera",
       avatarUrl: "https://picsum.photos/seed/alex/200/200",
       bio: "Platform administrator and full-stack engineer.",
@@ -28,7 +28,7 @@ export const MOCK_USERS: MockUser[] = [
     email: "editor@example.com",
     password: "password123",
     profile: {
-      id: "a1b2c3d4-0002-0002-0002-000000000002",
+      id: "a1b2c3d4-0002-4002-8002-000000000002",
       displayName: "Sam Chen",
       avatarUrl: "https://picsum.photos/seed/sam/200/200",
       bio: "Senior editor and technical writer.",
@@ -41,7 +41,7 @@ export const MOCK_USERS: MockUser[] = [
     email: "author1@example.com",
     password: "password123",
     profile: {
-      id: "a1b2c3d4-0003-0003-0003-000000000003",
+      id: "a1b2c3d4-0003-4003-8003-000000000003",
       displayName: "Maya Patel",
       avatarUrl: "https://picsum.photos/seed/maya/200/200",
       bio: "Frontend engineer and design systems enthusiast.",
@@ -54,7 +54,7 @@ export const MOCK_USERS: MockUser[] = [
     email: "author2@example.com",
     password: "password123",
     profile: {
-      id: "a1b2c3d4-0004-0004-0004-000000000004",
+      id: "a1b2c3d4-0004-4004-8004-000000000004",
       displayName: "Jordan Kim",
       avatarUrl: "https://picsum.photos/seed/jordan/200/200",
       bio: "Backend engineer specializing in distributed systems.",
@@ -67,7 +67,7 @@ export const MOCK_USERS: MockUser[] = [
     email: "author3@example.com",
     password: "password123",
     profile: {
-      id: "a1b2c3d4-0005-0005-0005-000000000005",
+      id: "a1b2c3d4-0005-4005-8005-000000000005",
       displayName: "Taylor Brooks",
       avatarUrl: "https://picsum.photos/seed/taylor/200/200",
       bio: "Product manager turned developer.",

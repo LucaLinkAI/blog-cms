@@ -5,6 +5,7 @@ import { getDataProvider } from "@/lib/data";
 import { PostGrid } from "@/components/blog/PostGrid";
 import { PostPagination } from "@/components/blog/PostPagination";
 import { SearchBar } from "@/components/blog/SearchBar";
+import { BlogSidebar } from "@/components/blog/BlogSidebar";
 import { PostFiltersSchema } from "@/lib/validations/post";
 
 export const revalidate = 60;
@@ -41,13 +42,15 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     typeof sp.search === "string" ? sp.search : undefined;
 
   const provider = getDataProvider();
-  const [result, allTags] = await Promise.all([
+  const [result, allTags, allCategories, allAuthors] = await Promise.all([
     provider.listPosts(
       { ...filters, status: "published" },
       (page - 1) * PAGE_SIZE,
       PAGE_SIZE
     ),
     provider.listTags(),
+    provider.listCategories(),
+    provider.listAuthors(),
   ]);
 
   const totalPages = Math.ceil(result.total / PAGE_SIZE);
@@ -59,51 +62,60 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   if (typeof sp.search === "string") extraParams.search = sp.search;
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8">Blog</h1>
+    <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-12 overflow-x-hidden">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">Blog</h1>
 
-      {/* Search bar */}
-      <div className="mb-6">
-        <Suspense fallback={null}>
-          <SearchBar defaultValue={currentSearch} />
-        </Suspense>
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-8 items-start">
+        {/* Main column */}
+        <div className="min-w-0">
+          {/* Search bar */}
+          <div className="mb-6">
+            <Suspense fallback={null}>
+              <SearchBar defaultValue={currentSearch} />
+            </Suspense>
+          </div>
 
-      {/* Tag filter pills */}
-      {allTags.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
-          {allTags.map((tag) => {
-            const isSelected = tag.slug === activeTagSlug;
-            // Build href: toggle tag (deselect if already selected)
-            const tagParams = new URLSearchParams();
-            if (!isSelected) tagParams.set("tagSlug", tag.slug);
-            if (currentSearch) tagParams.set("search", currentSearch);
-            const tagHref = `/blog${tagParams.toString() ? `?${tagParams.toString()}` : ""}`;
+          {/* Tag filter pills */}
+          {allTags.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-6 w-full min-w-0">
+              {allTags.map((tag) => {
+                const isSelected = tag.slug === activeTagSlug;
+                const tagParams = new URLSearchParams();
+                if (!isSelected) tagParams.set("tagSlug", tag.slug);
+                if (currentSearch) tagParams.set("search", currentSearch);
+                const tagHref = `/blog${tagParams.toString() ? `?${tagParams.toString()}` : ""}`;
 
-            return (
-              <Link
-                key={tag.id}
-                href={tagHref}
-                className={`flex-shrink-0 rounded-full border px-3 py-1 text-sm transition-colors ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "text-muted-foreground hover:text-foreground hover:border-foreground"
-                }`}
-              >
-                {tag.name}
-              </Link>
-            );
-          })}
+                return (
+                  <Link
+                    key={tag.id}
+                    href={tagHref}
+                    className={`flex-shrink-0 rounded-full border px-3 py-1 text-sm transition-colors ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "text-muted-foreground hover:text-foreground hover:border-foreground"
+                    }`}
+                  >
+                    {tag.name}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          <PostGrid posts={result.data} search={currentSearch} />
+          <PostPagination
+            currentPage={page}
+            totalPages={totalPages}
+            basePath="/blog"
+            searchParams={extraParams}
+          />
         </div>
-      )}
 
-      <PostGrid posts={result.data} search={currentSearch} />
-      <PostPagination
-        currentPage={page}
-        totalPages={totalPages}
-        basePath="/blog"
-        searchParams={extraParams}
-      />
+        {/* Right sidebar */}
+        <div className="sticky top-8">
+          <BlogSidebar categories={allCategories} authors={allAuthors} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -46,7 +46,7 @@ export function PostCard({ post }: PostCardProps) {
       <CardContent className="flex flex-col flex-1 p-5">
         {category && (
           <Badge
-            className="mb-2 self-start text-xs"
+            className="mb-2 self-start text-xs text-white"
             style={{ backgroundColor: category.color ?? undefined }}
           >
             {category.name}
@@ -64,7 +64,7 @@ export function PostCard({ post }: PostCardProps) {
         )}
       </CardContent>
 
-      <CardFooter className="px-5 pb-5 pt-0 flex items-center justify-between gap-2">
+      <CardFooter className="px-5 pb-5 pt-0 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Avatar className="h-7 w-7">
             <AvatarImage src={author?.avatarUrl ?? undefined} alt={`${author?.displayName ?? "Author"}'s avatar`} />

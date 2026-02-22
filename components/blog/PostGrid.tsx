@@ -30,7 +30,7 @@ function PostCardSkeleton() {
 export function PostGrid({ posts, search }: PostGridProps) {
   if (!posts) {
     return (
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <PostCardSkeleton key={i} />
         ))}
@@ -59,7 +59,7 @@ export function PostGrid({ posts, search }: PostGridProps) {
           Showing results for &ldquo;{search}&rdquo;
         </p>
       )}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}

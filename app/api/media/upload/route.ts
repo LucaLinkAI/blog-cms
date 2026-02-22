@@ -51,11 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing file field" }, { status: 400 });
   }
 
-  if (
-    !bucket ||
-    typeof bucket !== "string" ||
-    !BUCKET_CONFIG[bucket]
-  ) {
+  if (!bucket || typeof bucket !== "string" || !BUCKET_CONFIG[bucket]) {
     return NextResponse.json(
       {
         error:
@@ -85,12 +81,53 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const timestamp = Date.now();
+  const storagePath = `${bucket}/${session.user.id}/${timestamp}-${file.name}`;
+
+  // -------------------------------------------------------------------------
+  // Phase 2: upload to Supabase Storage
+  // -------------------------------------------------------------------------
+  if (process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase") {
+    const { supabaseAdmin } = await import("@/lib/supabase/service");
+
+    const arrayBuffer = await file.arrayBuffer();
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(bucket)
+      .upload(storagePath, arrayBuffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabaseAdmin.storage.from(bucket).getPublicUrl(storagePath);
+
+    const provider = getDataProvider();
+    const mediaItem = await provider.createMediaItem({
+      filename: file.name,
+      storagePath,
+      url: publicUrl,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      altText:
+        typeof altText === "string" && altText.length > 0 ? altText : undefined,
+      uploadedBy: session.user.id,
+    });
+
+    return NextResponse.json(mediaItem, { status: 201 });
+  }
+
+  // -------------------------------------------------------------------------
   // Phase 1 mock: generate a Picsum placeholder using the filename as seed
+  // -------------------------------------------------------------------------
   const seed = encodeURIComponent(
     file.name.replace(/\.[^.]+$/, "") || uuidv4()
   );
   const mockUrl = `https://picsum.photos/seed/${seed}/1200/630`;
-  const storagePath = `${bucket}/${session.user.id}/${Date.now()}-${file.name}`;
 
   const provider = getDataProvider();
   const mediaItem = await provider.createMediaItem({

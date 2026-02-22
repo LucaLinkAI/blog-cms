@@ -44,8 +44,8 @@ NEXT_PUBLIC_SITE_NAME="Blog CMS"
 
 # Leave Supabase vars empty for Phase 1
 NEXT_PUBLIC_SUPABASE_URL=""
-NEXT_PUBLIC_SUPABASE_ANON_KEY=""
-SUPABASE_SERVICE_ROLE_KEY=""
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=""
+SUPABASE_SECRET_KEY=""
 ```
 
 ### 3. Start the dev server
@@ -142,14 +142,16 @@ Update `.env.local`:
 ```env
 NEXT_PUBLIC_DATA_SOURCE="supabase"
 NEXT_PUBLIC_SUPABASE_URL="https://<your-project-ref>.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="<your-anon-key>"
-SUPABASE_SERVICE_ROLE_KEY="<your-service-role-key>"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="sb_publishable_..."
+SUPABASE_SECRET_KEY="sb_secret_..."
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 NEXT_PUBLIC_SITE_NAME="Blog CMS"
 REVALIDATE_SECRET="<generate-a-random-secret>"
 ```
 
-> **Security:** Never expose `SUPABASE_SERVICE_ROLE_KEY` to the browser. It must only be used in server-side code (Route Handlers, Server Actions). It is not prefixed with `NEXT_PUBLIC_`.
+> **Security:** Never expose `SUPABASE_SECRET_KEY` to the browser. It must only be used in server-side code (Route Handlers, Server Actions). It is not prefixed with `NEXT_PUBLIC_`.
+>
+> **Key format:** Find your publishable key (`sb_publishable_...`) and secret key (`sb_secret_...`) in Supabase Dashboard → Settings → API Keys.
 
 ### 6. Seed the database
 

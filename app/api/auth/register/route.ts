@@ -39,6 +39,65 @@ export async function POST(request: NextRequest) {
 
   const { email, password, displayName } = parsed.data;
 
+  // -------------------------------------------------------------------------
+  // Phase 2: Supabase user creation
+  // -------------------------------------------------------------------------
+  if (process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase") {
+    const { supabaseAdmin } = await import("@/lib/supabase/service");
+
+    // Check for existing user
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id",
+        (await supabaseAdmin.auth.admin.listUsers()).data.users.find(
+          (u) => u.email === email
+        )?.id ?? ""
+      )
+      .maybeSingle();
+
+    // Simpler: attempt createUser and catch duplicate error
+    const { data: authData, error: authError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { display_name: displayName },
+      });
+
+    if (authError) {
+      if (authError.message.toLowerCase().includes("already")) {
+        return NextResponse.json(
+          { error: "Email already registered" },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json({ error: authError.message }, { status: 400 });
+    }
+
+    // The handle_new_user trigger creates the profiles row automatically.
+    // Update display_name and slug to use the provided displayName.
+    const slug = slugify(displayName);
+    await supabaseAdmin
+      .from("profiles")
+      .update({ display_name: displayName, slug })
+      .eq("id", authData.user.id);
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("id", authData.user.id)
+      .single();
+
+    return NextResponse.json(
+      { user: { email }, profile: profile ?? null },
+      { status: 201 }
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Phase 1: mock user creation
+  // -------------------------------------------------------------------------
   if (mockEmailExists(email)) {
     return NextResponse.json(
       { error: "Email already registered" },

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDataProvider } from "@/lib/data";
+import { createStaticClient } from "@/lib/supabase/server";
 import { PostGrid } from "@/components/blog/PostGrid";
 import { PostPagination } from "@/components/blog/PostPagination";
 import { buildCategoryMetadata } from "@/lib/utils/seo";
@@ -13,9 +14,9 @@ interface CategoryPageProps {
 }
 
 export async function generateStaticParams() {
-  const provider = getDataProvider();
-  const categories = await provider.listCategories();
-  return categories.map((c) => ({ slug: c.slug }));
+  const supabase = createStaticClient();
+  const { data } = await supabase.from("categories").select("slug");
+  return (data ?? []).map((c: { slug: string }) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDataProvider } from "@/lib/data";
+import { createStaticClient } from "@/lib/supabase/server";
 import { BlockRenderer } from "@/components/editor/BlockRenderer";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,9 +20,12 @@ interface PostPageProps {
 }
 
 export async function generateStaticParams() {
-  const provider = getDataProvider();
-  const { data: posts } = await provider.listPosts({ status: "published" }, 0, 50);
-  return posts.map((p) => ({ slug: p.slug }));
+  const supabase = createStaticClient();
+  const { data } = await supabase
+    .from("posts")
+    .select("slug")
+    .eq("status", "published");
+  return (data ?? []).map((p: { slug: string }) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
@@ -91,7 +95,7 @@ export default async function PostPage({ params }: PostPageProps) {
         {category && (
           <div className="mb-4">
             <Link href={`/category/${category.slug}`}>
-              <Badge style={{ backgroundColor: category.color ?? undefined }}>
+              <Badge className="text-white" style={{ backgroundColor: category.color ?? undefined }}>
                 {category.name}
               </Badge>
             </Link>

@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "./scripts/db-migrate.sh",
+    "db:seed": "./scripts/db-seed.sh",
+    "db:reset": "./scripts/db-reset.sh",
+    "db:setup": "./scripts/db-migrate.sh && ./scripts/db-seed.sh"
   },
   "dependencies": {
     "@blocknote/core": "^0.46.2",
