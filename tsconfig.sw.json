@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": ["webworker", "esnext"],
+    "moduleResolution": "bundler"
+  },
+  "include": ["app/sw.ts"]
+}

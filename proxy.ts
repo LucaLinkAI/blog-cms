@@ -11,7 +11,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * handled by individual server components / route handlers instead, so
  * middleware is a no-op for session management.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   if (process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase") {
