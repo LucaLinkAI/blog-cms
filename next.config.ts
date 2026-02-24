@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     "@blocknote/react",
     "@blocknote/core",
+    "@blocknote/mantine",
     "@blocknote/shadcn",
     "@blocknote/server-util",
   ],

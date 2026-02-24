@@ -40,23 +40,11 @@ export async function POST(request: NextRequest) {
   const { email, password, displayName } = parsed.data;
 
   // -------------------------------------------------------------------------
-  // Phase 2: Supabase user creation
+  // Supabase user creation
   // -------------------------------------------------------------------------
   if (process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase") {
     const { supabaseAdmin } = await import("@/lib/supabase/service");
 
-    // Check for existing user
-    const { data: existing } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("id",
-        (await supabaseAdmin.auth.admin.listUsers()).data.users.find(
-          (u) => u.email === email
-        )?.id ?? ""
-      )
-      .maybeSingle();
-
-    // Simpler: attempt createUser and catch duplicate error
     const { data: authData, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
         email,
@@ -75,8 +63,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: authError.message }, { status: 400 });
     }
 
-    // The handle_new_user trigger creates the profiles row automatically.
-    // Update display_name and slug to use the provided displayName.
     const slug = slugify(displayName);
     await supabaseAdmin
       .from("profiles")
@@ -96,7 +82,7 @@ export async function POST(request: NextRequest) {
   }
 
   // -------------------------------------------------------------------------
-  // Phase 1: mock user creation
+  // Mock user creation
   // -------------------------------------------------------------------------
   if (mockEmailExists(email)) {
     return NextResponse.json(

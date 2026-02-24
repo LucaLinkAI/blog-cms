@@ -1,8 +1,9 @@
 "use client";
 
-import "@blocknote/shadcn/style.css";
+import "@blocknote/core/fonts/inter.css";
+import "@blocknote/mantine/style.css";
 import { useCreateBlockNote } from "@blocknote/react";
-import { BlockNoteView } from "@blocknote/shadcn";
+import { BlockNoteView } from "@blocknote/mantine";
 import { schema } from "./schema";
 import { useUiStore } from "@/store/ui";
 import { MediaPickerDialog } from "@/components/dashboard/MediaPickerDialog";
@@ -15,6 +16,25 @@ interface BlockEditorProps {
   editable?: boolean;
 }
 
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("bucket", "post-content");
+
+  const res = await fetch("/api/media/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? "Upload failed");
+  }
+
+  const media = await res.json();
+  return media.url as string;
+}
+
 export default function BlockEditor({
   initialContent,
   onChange,
@@ -23,6 +43,7 @@ export default function BlockEditor({
   const editor = useCreateBlockNote({
     schema,
     initialContent: initialContent?.length ? initialContent : undefined,
+    uploadFile,
   });
 
   const isMediaPickerOpen = useUiStore((s) => s.isMediaPickerOpen);
@@ -30,7 +51,6 @@ export default function BlockEditor({
   const closeMediaPicker = useUiStore((s) => s.closeMediaPicker);
 
   function handleMediaSelect(url: string) {
-    // Insert an image block after the current cursor position
     const currentBlock = editor.getTextCursorPosition().block;
     editor.insertBlocks(
       [{ type: "image", props: { url } }],

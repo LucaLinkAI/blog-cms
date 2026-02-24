@@ -14,6 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { slugify } from "@/lib/utils/slug";
 import type { Author, Category, Tag, UserRole } from "@/lib/data/types";
 
@@ -135,6 +142,45 @@ export function SettingsClient({
   // ── Users (admin only) ────────────────────────────────────────────────────
   const [authors, setAuthors] = useState<Author[]>(initialAuthors);
   const [userMsg, setUserMsg] = useState<string | null>(null);
+  const [addUserOpen, setAddUserOpen] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [addUserSaving, setAddUserSaving] = useState(false);
+  const [addUserMsg, setAddUserMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  async function handleAddUser(e: React.FormEvent) {
+    e.preventDefault();
+    setAddUserSaving(true);
+    setAddUserMsg(null);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: newUserName,
+          email: newUserEmail,
+          password: newUserPassword,
+        }),
+      });
+      if (res.status === 201) {
+        const { profile } = await res.json();
+        if (profile) setAuthors((prev) => [...prev, profile]);
+        setAddUserMsg({ type: "success", text: "User created successfully." });
+        setNewUserName("");
+        setNewUserEmail("");
+        setNewUserPassword("");
+      } else {
+        const err = await res.json();
+        setAddUserMsg({ type: "error", text: err.error ?? "Failed to create user." });
+      }
+    } finally {
+      setAddUserSaving(false);
+    }
+  }
 
   async function changeRole(id: string, role: UserRole) {
     setUserMsg(null);
@@ -411,8 +457,68 @@ export function SettingsClient({
       {/* ── Users (admin only) ─────────────────────────────────────────── */}
       {isAdmin && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Users</CardTitle>
+            <Dialog open={addUserOpen} onOpenChange={(open) => {
+              setAddUserOpen(open);
+              if (!open) setAddUserMsg(null);
+            }}>
+              <DialogTrigger asChild>
+                <Button size="sm">Add User</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add New User</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddUser} className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="newUserName">Display Name</Label>
+                    <Input
+                      id="newUserName"
+                      required
+                      minLength={1}
+                      maxLength={100}
+                      value={newUserName}
+                      onChange={(e) => setNewUserName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newUserEmail">Email</Label>
+                    <Input
+                      id="newUserEmail"
+                      type="email"
+                      required
+                      value={newUserEmail}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newUserPassword">Password</Label>
+                    <Input
+                      id="newUserPassword"
+                      type="password"
+                      required
+                      minLength={8}
+                      value={newUserPassword}
+                      onChange={(e) => setNewUserPassword(e.target.value)}
+                    />
+                  </div>
+                  {addUserMsg && (
+                    <p className={`text-sm ${addUserMsg.type === "success" ? "text-green-600" : "text-destructive"}`}>
+                      {addUserMsg.text}
+                    </p>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setAddUserOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={addUserSaving}>
+                      {addUserSaving ? "Creating…" : "Create User"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent className="space-y-4">
             {userMsg && (
